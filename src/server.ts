@@ -47,12 +47,12 @@ export class MyAgent extends Agent<Env> {
       } else {
         const { content } = message
         if (typeof content === 'string') {
-          connection.send(content)
+          connection.send(JSON.stringify(content))
         } else if (Array.isArray(content)) {
           content.forEach((line) => {
             console.log(line)
             if (line.type === 'text') {
-              connection.send(line.text)
+              if (line.text !== '') connection.send(JSON.stringify(line.text))
             } else {
               connection.send(JSON.stringify(line))
             }

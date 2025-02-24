@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 interface Message {
   text: string
-  isUser: boolean
+  type: 'user' | 'agent' | 'update'
 }
 
 export default function App() {
@@ -13,8 +13,18 @@ export default function App() {
 
   const agent = useAgent({
     agent: 'my-agent',
+    onOpen: () => {
+      setMessages((prev) => [...prev, { type: 'update', text: 'Connected...' }])
+    },
     onMessage: (message) => {
-      setMessages((prev) => [...prev, { text: message.data as string, isUser: false }])
+      setMessages((prev) => {
+        const data = JSON.parse(message.data) as string | { type: 'tool-call'; toolName: string; args: Record<string, any> }
+        const next: Message =
+          typeof data === 'string'
+            ? { text: data, type: 'agent' }
+            : { text: `TOOL CALLED ${data.toolName}:\n${JSON.stringify(data.args)})`, type: 'update' }
+        return [...prev, next]
+      })
       setIsLoading(false)
     },
   })
@@ -24,7 +34,7 @@ export default function App() {
     if (!input.trim() || isLoading) return
 
     const userMessage = input.trim()
-    setMessages((prev) => [...prev, { text: userMessage, isUser: true }])
+    setMessages((prev) => [...prev, { text: userMessage, type: 'user' }])
     setInput('')
     setIsLoading(true)
     agent.send(userMessage)
@@ -34,11 +44,11 @@ export default function App() {
     <div className="min-h-screen">
       <div className="chat-container">
         {messages.map((message, index) => (
-          <div key={index} className={`message ${message.isUser ? 'user-message' : 'agent-message'}`}>
+          <div key={index} className={`message ${message.type}-message`}>
             {message.text}
           </div>
         ))}
-        {isLoading && <div className="message agent-message">Thinking...</div>}
+        {isLoading && <div className="message update-message">Thinking...</div>}
       </div>
 
       <form onSubmit={handleSubmit} className="input-container">

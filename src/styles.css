@@ -2,18 +2,26 @@ body {
   background-color: #f3f4f6;
   color: #111827;
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .min-h-screen {
   min-height: 100vh;
   padding-bottom: 6rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-container {
+  width: 100%;
   max-width: 42rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1rem 2rem;
+  background-color: #fdfdfd;
+  flex-grow: 1;
 }
 
 .message {
@@ -35,12 +43,20 @@ body {
   max-width: 80%;
 }
 
+.update-message {
+  max-width: 80%;
+  font-size: 0.8em;
+  margin: 0 auto;
+  text-align: center;
+  opacity: 0.5;
+}
+
 .input-container {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: white;
+  background-color: #E5E7EBFF;
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
 }
