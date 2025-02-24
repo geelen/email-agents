@@ -15,6 +15,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@ai-sdk/groq": "^1.1.10",
     "@cloudflare/vite-plugin": "^0.1.1",
     "@cloudflare/workers-types": "^4.20250214.0",
     "@tailwindcss/vite": "^4.0.8",
@@ -22,17 +23,20 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "prettier": "^3.5.2",
     "tailwindcss": "^4.0.8",
     "typescript": "^5.7.3",
     "vite": "^6.1.1",
-    "wrangler": "^3.109.2"
+    "wrangler": "^3.109.2",
+    "zod": "^3.24.2"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.1.13",
     "@ai-sdk/react": "^1.1.17",
-    "@cloudflare/agents": "^0.0.10",
+    "@cloudflare/agents": "^0.0.12",
     "ai": "^4.1.45",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "ws": "^8.18.0"
   }
 }
