@@ -2,10 +2,12 @@ import { createGroq } from '@ai-sdk/groq'
 import { Agent, routeAgentRequest, type Connection, type ConnectionContext, type WSMessage } from '@cloudflare/agents'
 import { type CoreAssistantMessage, type CoreMessage, type CoreToolMessage, generateText, type Tool, tool } from 'ai'
 import z from 'zod'
+import { sendEmail } from './utils'
 
 type Env = {
   GROQ_API_KEY: string
   MyAgent: DurableObjectNamespace<MyAgent>
+  EMAIL: SendEmail
 }
 
 const RESET: CoreMessage[] = [
@@ -110,24 +112,28 @@ export class MyAgent extends Agent<Env> {
       execute: async ({ recipient, subject, contentType, body }) => {
         console.log({ recipient, subject, contentType, body })
 
-        // TODO: actually send the email
-
-        this.messages.push({
-          role: 'system',
-          content: `You have successfully sent the email. Please inform the user, with a summary of what you sent.`,
-        })
-
-        this.#talkToLLM(connection, false).then(async () => {
-          await scheduler.wait(2_000)
+        try {
+          const success = await sendEmail(this.ctx.id, this.env.EMAIL, 'glen@gmad.dev', recipient, subject, contentType, body)
 
           this.messages.push({
             role: 'system',
-            content: `You have received the reply: "FUCK YES"`,
+            content: `You have successfully sent the email. Please inform the user, with a summary of what you sent.`,
           })
-          await this.#talkToLLM(connection, false)
-        })
 
-        return 'Message sent'
+          this.#talkToLLM(connection, false).then(async () => {
+            await scheduler.wait(2_000)
+
+            this.messages.push({
+              role: 'system',
+              content: `You have received the reply: "FUCK YES"`,
+            })
+            await this.#talkToLLM(connection, false)
+          })
+
+          return success
+        } catch (e) {
+          return `Error: ${(e as any).message}`
+        }
       },
     })
 }

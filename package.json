@@ -23,6 +23,8 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "mimetext": "^3.0.27",
+    "postal-mime": "^2.4.3",
     "prettier": "^3.5.2",
     "tailwindcss": "^4.0.8",
     "typescript": "^5.7.3",
