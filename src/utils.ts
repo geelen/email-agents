@@ -1,10 +1,11 @@
 import { createMimeMessage } from 'mimetext'
-import PostalMime from 'postal-mime'
 
 export async function sendEmail(
   id: DurableObjectId,
   EMAIL: SendEmail,
   from: string,
+  fromName: string,
+  fromDomain: string,
   recipient: string,
   subject: string,
   contentType: string,
@@ -15,14 +16,14 @@ export async function sendEmail(
   }
 
   const msg = createMimeMessage()
-  msg.setSender({ name: 'Your Agent', addr: from })
+  msg.setSender({ name: fromName, addr: from })
   msg.setRecipient(recipient)
   msg.setSubject(subject)
   msg.addMessage({
     contentType: contentType,
     data: body,
   })
-  msg.setHeader('Message-ID', `<${idToBase64(id)}@gmad.dev>`)
+  msg.setHeader('Message-ID', `<${idToBase64(id)}@${fromDomain}>`)
 
   // import this dynamically import { EmailMessage } from 'cloudflare:email'
   const { EmailMessage } = await import('cloudflare:email')

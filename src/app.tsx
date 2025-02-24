@@ -11,6 +11,8 @@ type ServerMessage =
   | { type: 'tool-call'; toolName: string; args: Record<string, any> }
   | { type: 'tool-result'; toolName: string; result: any }
 
+let timeout: number | undefined
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -45,6 +47,15 @@ export default function App() {
     setInput('')
     setIsLoading(true)
     agent.send(userMessage)
+
+    if (timeout) clearTimeout(timeout)
+    const ping = () => {
+      // @ts-ignore
+      timeout = setTimeout(ping, 1000)
+      agent.send('PING')
+    }
+    // @ts-ignore
+    timeout = setTimeout(ping, 1000)
   }
 
   return (
