@@ -6,6 +6,11 @@ interface Message {
   type: 'user' | 'agent' | 'update'
 }
 
+type ServerMessage =
+  | string
+  | { type: 'tool-call'; toolName: string; args: Record<string, any> }
+  | { type: 'tool-result'; toolName: string; result: any }
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -18,11 +23,13 @@ export default function App() {
     },
     onMessage: (message) => {
       setMessages((prev) => {
-        const data = JSON.parse(message.data) as string | { type: 'tool-call'; toolName: string; args: Record<string, any> }
+        const data = JSON.parse(message.data) as ServerMessage
         const next: Message =
           typeof data === 'string'
             ? { text: data, type: 'agent' }
-            : { text: `TOOL CALLED ${data.toolName}:\n${JSON.stringify(data.args)})`, type: 'update' }
+            : data.type === 'tool-call'
+              ? { text: `${data.toolName} ➡️\n${JSON.stringify(data.args)}`, type: 'update' }
+              : { text: `⬅️ ${data.toolName}\n${JSON.stringify(data.result)}`, type: 'update' }
         return [...prev, next]
       })
       setIsLoading(false)

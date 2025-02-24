@@ -10,7 +10,6 @@ body {
 
 .min-h-screen {
   min-height: 100vh;
-  padding-bottom: 6rem;
   display: flex;
   flex-direction: column;
 }
@@ -49,6 +48,12 @@ body {
   margin: 0 auto;
   text-align: center;
   opacity: 0.5;
+  white-space: pre-wrap;
+
+  & + & {
+    padding-top: 0;
+    margin-top: -0.5rem;
+  }
 }
 
 .input-container {

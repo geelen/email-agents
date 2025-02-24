@@ -42,25 +42,27 @@ export class MyAgent extends Agent<Env> {
   respond(connection: Connection, message: CoreAssistantMessage | CoreToolMessage) {
     this.messages.push(message)
     try {
-      if (message.role === 'tool') {
-        console.log('OK')
+      // if (message.role === 'tool') {
+      //   console.log(message)
+      // } else {
+      const { content } = message
+      if (typeof content === 'string') {
+        connection.send(JSON.stringify(content))
+      } else if (Array.isArray(content)) {
+        content.forEach((line) => {
+          console.log({ line })
+          if (line.type === 'text') {
+            if (line.text !== '') connection.send(JSON.stringify(line.text))
+            // } else if (line.type === 'tool-result') {
+            //   connection.send(JSON.stringify(line.result))
+          } else {
+            connection.send(JSON.stringify(line))
+          }
+        })
       } else {
-        const { content } = message
-        if (typeof content === 'string') {
-          connection.send(JSON.stringify(content))
-        } else if (Array.isArray(content)) {
-          content.forEach((line) => {
-            console.log(line)
-            if (line.type === 'text') {
-              if (line.text !== '') connection.send(JSON.stringify(line.text))
-            } else {
-              connection.send(JSON.stringify(line))
-            }
-          })
-        } else {
-          connection.send(JSON.stringify(content))
-        }
+        connection.send(JSON.stringify(content))
       }
+      // }
     } catch (error) {
       console.error('Error processing message:', error)
       connection.send(`Something went wrong: ${(error as Error).message}`)
@@ -69,16 +71,22 @@ export class MyAgent extends Agent<Env> {
 
   async onMessage(connection: Connection, message: WSMessage): Promise<void> {
     this.messages.push({ role: 'user', content: message as string })
+    console.log('Message from client', message)
 
+    await this.#talkToLLM(connection, true)
+  }
+
+  async #talkToLLM(connection: Connection, includeTools: boolean) {
     try {
-      console.log('Message from client', message)
       const response = await generateText({
         model: this.groq('llama-3.3-70b-versatile'),
         messages: this.messages,
         maxTokens: 500,
-        tools: {
-          sendEmail: this.#sendEmail,
-        },
+        tools: includeTools
+          ? {
+              sendEmail: this.#sendEmail(connection),
+            }
+          : {},
       })
       console.log(response)
 
@@ -90,21 +98,38 @@ export class MyAgent extends Agent<Env> {
     }
   }
 
-  #sendEmail = tool({
-    description: 'Send a text or HTML email to an arbitrary recipient. You must specify an exact email address, do not invent one.',
-    parameters: z.object({
-      recipient: z.string().describe(`The email address of the recipient.`),
-      subject: z.string().describe(`The subject of the email.`),
-      contentType: z.string().describe(`The content type of the email. Can be text/plain or text/html`),
-      body: z.string().describe(`The body of the email. Must match the provided contentType parameter`),
-    }),
-    execute: async ({ recipient, subject, contentType, body }) => {
-      console.log('Ok smarty!')
-      console.log({ recipient, subject, contentType, body })
+  #sendEmail = (connection: Connection) =>
+    tool({
+      description: 'Send a text or HTML email to an arbitrary recipient. You must specify an exact email address, do not invent one.',
+      parameters: z.object({
+        recipient: z.string().describe(`The email address of the recipient.`),
+        subject: z.string().describe(`The subject of the email.`),
+        contentType: z.string().describe(`The content type of the email. Can be text/plain or text/html`),
+        body: z.string().describe(`The body of the email. Must match the provided contentType parameter`),
+      }),
+      execute: async ({ recipient, subject, contentType, body }) => {
+        console.log({ recipient, subject, contentType, body })
 
-      return 'He says hi.'
-    },
-  })
+        // TODO: actually send the email
+
+        this.messages.push({
+          role: 'system',
+          content: `You have successfully sent the email. Please inform the user, with a summary of what you sent.`,
+        })
+
+        this.#talkToLLM(connection, false).then(async () => {
+          await scheduler.wait(2_000)
+
+          this.messages.push({
+            role: 'system',
+            content: `You have received the reply: "FUCK YES"`,
+          })
+          await this.#talkToLLM(connection, false)
+        })
+
+        return 'Message sent'
+      },
+    })
 }
 
 export default {
